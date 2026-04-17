@@ -122,13 +122,13 @@ class StateStore:
         relevance: bool,
         priority: str,
         delivery_status: DeliveryStatus = DeliveryStatus.delivered,
-        twilio_sids: list[str] | None = None,
+        message_ids: list[str] | None = None,
     ) -> ProcessedEmail:
         """Record a terminal-state row and commit.
 
         The signature is deliberately restricted to non-sensitive metadata:
         Message-ID / UID for dedup, the classifier booleans (relevance,
-        priority), delivery status, and the Twilio SIDs. Callers MUST NOT
+        priority), delivery status, and the message IDs. Callers MUST NOT
         pass email bodies, subjects, sender identities, classifier reasons,
         or LLM summaries — and the store exposes no column to hold them.
         This is the enforcement half of emAI's privacy contract; the
@@ -153,7 +153,7 @@ class StateStore:
             relevance=relevance,
             priority=priority,
             delivery_status=delivery_status.value,
-            twilio_sids=",".join(twilio_sids) if twilio_sids else None,
+            message_ids=",".join(message_ids) if message_ids else None,
         )
 
         try:
@@ -175,7 +175,7 @@ class StateStore:
             record.delivery_status,
             record.priority,
             record.relevance,
-            record.twilio_sids or "-",
+            record.message_ids or "-",
         )
         return record
 

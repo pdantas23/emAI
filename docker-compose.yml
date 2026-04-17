@@ -1,0 +1,36 @@
+# =============================================================================
+# emAI — Docker Compose (Easypanel-ready)
+# =============================================================================
+# Two services:
+#   dashboard: Streamlit admin/user panel + metrics
+#   worker:    Email pipeline processor (all users, interval from DB)
+# =============================================================================
+
+services:
+  dashboard:
+    build: .
+    container_name: emai-dashboard
+    command: streamlit run src/ui/app.py --server.address=0.0.0.0
+    ports:
+      - "8501:8501"
+    env_file: .env
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  worker:
+    build: .
+    container_name: emai-worker
+    command: python -m src.main --all-users
+    env_file: .env
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    depends_on:
+      dashboard:
+        condition: service_started

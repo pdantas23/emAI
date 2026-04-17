@@ -35,10 +35,10 @@ class UserRuntimeConfig:
     anthropic_api_key: str | None = None
     openai_api_key: str | None = None
 
-    # ---- Twilio --------------------------------------------------------------
-    twilio_account_sid: str | None = None
-    twilio_auth_token: str | None = None
-    twilio_whatsapp_from: str | None = None
+    # ---- Evolution API (WhatsApp gateway) ------------------------------------
+    evolution_url: str | None = None
+    evolution_api_key: str | None = None
+    evolution_instance: str | None = None
 
     # ---- Supabase (per-user project, if different from admin DB) -------------
     supabase_url: str | None = None
@@ -72,12 +72,12 @@ class UserRuntimeConfig:
         if not self.anthropic_api_key and not self.openai_api_key:
             errors.append("No LLM API key configured (need anthropic_key or openai_key)")
 
-        if not self.twilio_account_sid:
-            errors.append("twilio_sid is missing")
-        if not self.twilio_auth_token:
-            errors.append("twilio_token is missing")
-        if not self.twilio_whatsapp_from:
-            errors.append("twilio_number (WhatsApp sender) is missing")
+        if not self.evolution_url:
+            errors.append("evolution_url is missing")
+        if not self.evolution_api_key:
+            errors.append("evolution_api_key is missing")
+        if not self.evolution_instance:
+            errors.append("evolution_instance is missing")
 
         if not self.imap_username:
             errors.append("email (IMAP username) is missing")

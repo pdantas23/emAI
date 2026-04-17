@@ -72,7 +72,7 @@ def render(cred_store: CredentialStore, settings_store: UserSettingsStore) -> No
     whatsapp_to = st.text_input(
         "WhatsApp (destino)",
         value=existing.get("whatsapp_to", ""),
-        placeholder="whatsapp:+5511999999999",
+        placeholder="5511999999999",
         key="user_whatsapp",
     )
 
@@ -91,8 +91,8 @@ def render(cred_store: CredentialStore, settings_store: UserSettingsStore) -> No
         if not email:
             st.error("Email e obrigatorio.")
             return
-        if not whatsapp_to or not whatsapp_to.startswith("whatsapp:+"):
-            st.error("WhatsApp deve seguir o formato whatsapp:+5511999999999")
+        if not whatsapp_to or not whatsapp_to.strip().replace("+", "").isdigit():
+            st.error("WhatsApp deve conter apenas digitos (ex: 5511999999999)")
             return
 
         try:

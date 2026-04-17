@@ -42,16 +42,32 @@ def validate_openai_key(api_key: str) -> tuple[bool, str]:
         return False, f"Connection failed: {type(exc).__name__}: {exc}"
 
 
-def validate_twilio(account_sid: str, auth_token: str) -> tuple[bool, str]:
-    """Verify Twilio credentials by fetching the account info."""
+def validate_evolution(
+    base_url: str, api_key: str, instance: str
+) -> tuple[bool, str]:
+    """Verify Evolution API credentials by fetching instance info."""
     try:
-        from twilio.rest import Client
+        import httpx
 
-        client = Client(account_sid, auth_token)
-        account = client.api.accounts(account_sid).fetch()
-        return True, f"OK — account '{account.friendly_name}' ({account.status})"
+        url = f"{base_url.rstrip('/')}/instance/fetchInstances"
+        response = httpx.get(
+            url,
+            headers={"apikey": api_key},
+            params={"instanceName": instance},
+            timeout=10.0,
+        )
+        if response.status_code == 401:
+            return False, "Invalid API key (401 Unauthorized)"
+        if response.status_code >= 400:
+            return False, f"Evolution API error: HTTP {response.status_code}"
+
+        data = response.json()
+        if isinstance(data, list) and len(data) > 0:
+            state = data[0].get("instance", {}).get("state", "unknown")
+            return True, f"OK — instance '{instance}' (state: {state})"
+        return False, f"Instance '{instance}' not found"
     except Exception as exc:
-        return False, f"Twilio validation failed: {type(exc).__name__}: {exc}"
+        return False, f"Evolution validation failed: {type(exc).__name__}: {exc}"
 
 
 def validate_imap(

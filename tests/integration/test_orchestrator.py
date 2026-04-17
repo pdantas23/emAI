@@ -67,7 +67,7 @@ from src.ai.classifier import Classification, EmailClassifier, Priority
 from src.ai.summarizer import EmailSummarizer, EmailSummary, SummaryFailure
 from src.core.orchestrator import Orchestrator, RunStats
 from src.email_client.base import EmailClient, RawEmail
-from src.messaging.whatsapp_twilio import WhatsAppClient, WhatsAppDeliveryError
+from src.messaging.evolution_api import EvolutionClient, WhatsAppDeliveryError
 from src.storage.models import DeliveryStatus
 from src.storage.state import StateStore, StorageError
 
@@ -418,7 +418,7 @@ class TestRelevanceGate:
         assert row.delivery_status == DeliveryStatus.skipped_irrelevant.value
         # Privacy contract: no summary fields exist on the row at all; all
         # we keep for skipped emails is the Message-ID/UID + verdict metadata.
-        assert row.twilio_sids is None
+        assert row.message_ids is None
         assert row.relevance is False
         assert ec.seen_uids == [email.uid]
 
@@ -470,7 +470,7 @@ class TestDedup:
             relevance=True,
             priority=Priority.high.value,
             delivery_status=DeliveryStatus.delivered,
-            twilio_sids=["SM" + "z" * 32],
+            message_ids=["SM" + "z" * 32],
         )
 
         orch, ec, clf, smr, wa = _build_orchestrator(
@@ -640,11 +640,11 @@ class TestPerEmailDelivery:
         row_a = store.get(a.message_id)
         row_b = store.get(b.message_id)
         assert row_a is not None and row_b is not None
-        assert row_a.twilio_sids is not None and row_b.twilio_sids is not None
+        assert row_a.message_ids is not None and row_b.message_ids is not None
         # Stored as comma-joined csv; a single sid has zero commas.
-        assert "," not in row_a.twilio_sids
-        assert "," not in row_b.twilio_sids
-        assert row_a.twilio_sids != row_b.twilio_sids
+        assert "," not in row_a.message_ids
+        assert "," not in row_b.message_ids
+        assert row_a.message_ids != row_b.message_ids
 
 
 # =========================================================================== #
@@ -1139,12 +1139,12 @@ class TestRealCollaboratorContract:
             email_client=FakeEmailClient([]),
             classifier=EmailClassifier(llm=_NullLLM()),  # type: ignore[arg-type]
             summarizer=EmailSummarizer(llm=_NullLLM()),  # type: ignore[arg-type]
-            whatsapp=WhatsAppClient(
-                account_sid="ACxxx",
-                auth_token="fake",
-                whatsapp_from="whatsapp:+14155238886",
-                whatsapp_to="whatsapp:+5511999999999",
-                client=_NullTwilio(),  # type: ignore[arg-type]
+            whatsapp=EvolutionClient(
+                base_url="https://evo.test",
+                api_key="fake",
+                instance="test",
+                whatsapp_to="5511999999999",
+                http_client=_NullTwilio(),  # type: ignore[arg-type]
             ),
             state=store,
         )

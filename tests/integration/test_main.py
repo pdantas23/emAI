@@ -41,12 +41,12 @@ def _valid_config(**overrides: Any) -> UserRuntimeConfig:
     defaults = dict(
         user_id="test-user",
         anthropic_api_key="sk-ant-fake",
-        twilio_account_sid="ACxxx",
-        twilio_auth_token="token",
-        twilio_whatsapp_from="whatsapp:+14155238886",
+        evolution_url="https://evo.test",
+        evolution_api_key="fake-evo-key",
+        evolution_instance="test-instance",
         imap_username="test@example.com",
         imap_password="test-password",
-        whatsapp_to="whatsapp:+5511999999999",
+        whatsapp_to="5511999999999",
         database_url="sqlite:///",
     )
     defaults.update(overrides)
@@ -59,9 +59,10 @@ def _valid_config(**overrides: Any) -> UserRuntimeConfig:
 
 
 class TestParseArgs:
-    def test_user_id_is_required(self) -> None:
-        with pytest.raises(SystemExit):
-            _parse_args([])
+    def test_no_args_accepted_for_all_users_mode(self) -> None:
+        args = _parse_args(["--all-users"])
+        assert args.all_users is True
+        assert args.user_id is None
 
     def test_user_id_is_captured(self) -> None:
         args = _parse_args(["--user-id", "philip"])
@@ -100,17 +101,17 @@ class TestPreflightCheck:
         assert not result.ok
         assert any("LLM" in e for e in result.errors)
 
-    def test_missing_twilio_sid_caught(self) -> None:
-        result = preflight_check(_valid_config(twilio_account_sid=None))
-        assert any("twilio_sid" in e for e in result.errors)
+    def test_missing_evolution_url_caught(self) -> None:
+        result = preflight_check(_valid_config(evolution_url=None))
+        assert any("evolution_url" in e for e in result.errors)
 
-    def test_missing_twilio_token_caught(self) -> None:
-        result = preflight_check(_valid_config(twilio_auth_token=None))
-        assert any("twilio_token" in e for e in result.errors)
+    def test_missing_evolution_api_key_caught(self) -> None:
+        result = preflight_check(_valid_config(evolution_api_key=None))
+        assert any("evolution_api_key" in e for e in result.errors)
 
-    def test_missing_twilio_number_caught(self) -> None:
-        result = preflight_check(_valid_config(twilio_whatsapp_from=None))
-        assert any("twilio_number" in e for e in result.errors)
+    def test_missing_evolution_instance_caught(self) -> None:
+        result = preflight_check(_valid_config(evolution_instance=None))
+        assert any("evolution_instance" in e for e in result.errors)
 
     def test_missing_imap_username_caught(self) -> None:
         result = preflight_check(_valid_config(imap_username=""))

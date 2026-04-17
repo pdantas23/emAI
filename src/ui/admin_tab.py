@@ -2,7 +2,7 @@
 
 Protected by a simple admin password. Allows the admin to:
   1. Select or create a user_id
-  2. Enter/update infrastructure keys (Anthropic, Twilio, Supabase, Gmail)
+  2. Enter/update infrastructure keys (Anthropic, Evolution API, Supabase, Gmail)
   3. Validate each key with a live test before saving
 """
 
@@ -13,9 +13,8 @@ import streamlit as st
 from src.storage.credentials import CredentialStore
 from src.ui.validators import (
     validate_anthropic_key,
-    validate_imap,
+    validate_evolution,
     validate_openai_key,
-    validate_twilio,
 )
 
 
@@ -85,35 +84,35 @@ def render(cred_store: CredentialStore, user_settings_store: "UserSettingsStore"
         else:
             st.error(msg)
 
-    # ---- Twilio ----
-    st.markdown("**WhatsApp — Twilio**")
-    twilio_sid_hint = _mask(existing.get("twilio_sid"))
-    twilio_sid = st.text_input(
-        "Twilio Account SID",
+    # ---- Evolution API ----
+    st.markdown("**WhatsApp — Evolution API**")
+    evolution_url = st.text_input(
+        "Evolution API URL",
+        value=existing.get("evolution_url", ""),
+        placeholder="https://evolution.example.com",
+        key="admin_evolution_url",
+    )
+    evolution_api_key_hint = _mask(existing.get("evolution_api_key"))
+    evolution_api_key = st.text_input(
+        "Evolution API Key",
         type="password",
-        placeholder=f"Atual: {twilio_sid_hint}" if twilio_sid_hint else "ACxxxxxxxx",
-        key="admin_twilio_sid",
+        placeholder=f"Atual: {evolution_api_key_hint}" if evolution_api_key_hint else "",
+        key="admin_evolution_key",
     )
-    twilio_token_hint = _mask(existing.get("twilio_token"))
-    twilio_token = st.text_input(
-        "Twilio Auth Token",
-        type="password",
-        placeholder=f"Atual: {twilio_token_hint}" if twilio_token_hint else "",
-        key="admin_twilio_token",
+    evolution_instance = st.text_input(
+        "Evolution Instance",
+        value=existing.get("evolution_instance", ""),
+        placeholder="nome-da-instancia",
+        key="admin_evolution_instance",
     )
-    twilio_number = st.text_input(
-        "Twilio WhatsApp From",
-        value=existing.get("twilio_number", ""),
-        placeholder="whatsapp:+14155238886",
-        key="admin_twilio_number",
-    )
-    if twilio_sid and twilio_token and st.button("Testar Twilio", key="btn_test_twilio"):
-        with st.spinner("Validando..."):
-            ok, msg = validate_twilio(twilio_sid, twilio_token)
-        if ok:
-            st.success(msg)
-        else:
-            st.error(msg)
+    if evolution_url and evolution_api_key and evolution_instance:
+        if st.button("Testar Evolution API", key="btn_test_evolution"):
+            with st.spinner("Validando..."):
+                ok, msg = validate_evolution(evolution_url, evolution_api_key, evolution_instance)
+            if ok:
+                st.success(msg)
+            else:
+                st.error(msg)
 
     # ---- Gmail App Password ----
     st.markdown("**Gmail — App Password**")
@@ -148,12 +147,12 @@ def render(cred_store: CredentialStore, user_settings_store: "UserSettingsStore"
             kwargs["anthropic_key"] = anthropic_key
         if openai_key:
             kwargs["openai_key"] = openai_key
-        if twilio_sid:
-            kwargs["twilio_sid"] = twilio_sid
-        if twilio_token:
-            kwargs["twilio_token"] = twilio_token
-        if twilio_number:
-            kwargs["twilio_number"] = twilio_number
+        if evolution_url:
+            kwargs["evolution_url"] = evolution_url
+        if evolution_api_key:
+            kwargs["evolution_api_key"] = evolution_api_key
+        if evolution_instance:
+            kwargs["evolution_instance"] = evolution_instance
         if gmail_password:
             kwargs["gmail_app_password"] = gmail_password
         if supabase_url:

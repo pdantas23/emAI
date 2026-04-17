@@ -50,7 +50,7 @@ from src.ai.llm_client import LLMClient
 from src.ai.summarizer import EmailSummarizer
 from src.core.orchestrator import Orchestrator, RunStats
 from src.email_client.gmail_imap import GmailIMAPClient
-from src.messaging.whatsapp_twilio import WhatsAppClient
+from src.messaging.evolution_api import EvolutionClient
 from src.storage.credentials import CredentialStore
 from src.storage.state import StateStore, StorageError, _build_engine
 from src.storage.user_settings import UserSettingsStore
@@ -107,9 +107,9 @@ def load_user_config(user_id: str) -> UserRuntimeConfig:
         user_id=user_id,
         anthropic_api_key=creds.get("anthropic_key"),
         openai_api_key=creds.get("openai_key"),
-        twilio_account_sid=creds.get("twilio_sid"),
-        twilio_auth_token=creds.get("twilio_token"),
-        twilio_whatsapp_from=creds.get("twilio_number"),
+        evolution_url=creds.get("evolution_url"),
+        evolution_api_key=creds.get("evolution_api_key"),
+        evolution_instance=creds.get("evolution_instance"),
         supabase_url=creds.get("supabase_url"),
         supabase_key=creds.get("supabase_key"),
         imap_host=str(user_settings.get("imap_host", "imap.gmail.com")),
@@ -179,10 +179,10 @@ def build_orchestrator(
     classifier = EmailClassifier(llm=llm)
     summarizer = EmailSummarizer(llm=llm)
 
-    whatsapp = WhatsAppClient(
-        account_sid=config.twilio_account_sid or "",
-        auth_token=config.twilio_auth_token or "",
-        whatsapp_from=config.twilio_whatsapp_from or "",
+    whatsapp = EvolutionClient(
+        base_url=config.evolution_url or "",
+        api_key=config.evolution_api_key or "",
+        instance=config.evolution_instance or "",
         whatsapp_to=config.whatsapp_to,
     )
 
@@ -312,8 +312,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--user-id",
-        required=True,
+        default=None,
         help="ID do usuario cujas credenciais serao carregadas do banco",
+    )
+    parser.add_argument(
+        "--all-users",
+        action="store_true",
+        help="modo worker: executa o pipeline para todos os usuarios provisionados",
     )
     parser.add_argument(
         "--once",
@@ -340,9 +345,75 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 # --------------------------------------------------------------------------- #
 
 
+def _run_all_users_loop() -> int:
+    """Worker mode: loop forever, running the pipeline for every provisioned user.
+
+    Each user's `run_interval_minutes` is respected individually. The worker
+    tracks the last run timestamp per user and only runs when the interval
+    has elapsed.
+    """
+    import time
+    from datetime import datetime, timedelta
+
+    engine = _build_engine(settings.database_url)
+    SQLModel.metadata.create_all(engine)
+    cred_store = CredentialStore(engine)
+
+    last_run: dict[str, datetime] = {}
+    log.info("[WORKER] starting multi-user worker loop")
+
+    try:
+        while True:
+            users = cred_store.list_users()
+            now = datetime.now()
+
+            for user_id in users:
+                try:
+                    config = load_user_config(user_id)
+                except Exception as exc:  # noqa: BLE001
+                    log.warning("[WORKER] skipping user={}: {}", user_id, exc)
+                    continue
+
+                interval = timedelta(minutes=config.run_interval_minutes)
+                if user_id in last_run and (now - last_run[user_id]) < interval:
+                    continue
+
+                errors = config.validate()
+                if errors:
+                    log.warning("[WORKER] user={} has config issues: {}", user_id, errors)
+                    continue
+
+                log.info("[WORKER] running pipeline for user={}", user_id)
+                try:
+                    orch, email_client, state = build_orchestrator(config)
+                    stats = run_once(orch)
+                    state.close()
+                    log.info(
+                        "[WORKER] user={} done — delivered={} irrelevant={} failed={}",
+                        user_id, stats.delivered, stats.skipped_irrelevant, stats.failed,
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    log.error("[WORKER] user={} pipeline error: {}", user_id, exc)
+
+                last_run[user_id] = datetime.now()
+
+            time.sleep(30)  # check cycle every 30 seconds
+    except KeyboardInterrupt:
+        log.info("[WORKER] interrupted — shutting down")
+        return EXIT_INTERRUPTED
+
+
 def run(argv: list[str] | None = None) -> int:
     """Top-level entry point. Returns the exit code (0 / 1 / 2 / 130)."""
     args = _parse_args(argv)
+
+    # ---- Worker mode: all users ----
+    if args.all_users:
+        return _run_all_users_loop()
+
+    if not args.user_id:
+        log.error("[STARTUP] either --user-id or --all-users is required")
+        return EXIT_PREFLIGHT_FAILURE
 
     # ---- Load user config from DB ----
     try:

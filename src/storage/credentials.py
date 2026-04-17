@@ -37,11 +37,17 @@ class UserCredential(SQLModel, table=True):
     # Encrypted BYTEA columns — stored as raw bytes.
     anthropic_key: bytes | None = Field(default=None)
     openai_key: bytes | None = Field(default=None)
-    twilio_sid: bytes | None = Field(default=None)
-    twilio_token: bytes | None = Field(default=None)
-    twilio_number: str | None = Field(default=None, max_length=30)
+
+    # Evolution API (WhatsApp gateway)
+    evolution_url: str | None = Field(default=None)
+    evolution_api_key: bytes | None = Field(default=None)
+    evolution_instance: str | None = Field(default=None, max_length=100)
+
+    # Supabase project credentials
     supabase_url: str | None = Field(default=None)
     supabase_key: bytes | None = Field(default=None)
+
+    # Gmail / IMAP
     gmail_app_password: bytes | None = Field(default=None)
 
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
@@ -68,9 +74,9 @@ class CredentialStore:
         admin_name: str = "admin",
         anthropic_key: str | None = None,
         openai_key: str | None = None,
-        twilio_sid: str | None = None,
-        twilio_token: str | None = None,
-        twilio_number: str | None = None,
+        evolution_url: str | None = None,
+        evolution_api_key: str | None = None,
+        evolution_instance: str | None = None,
         supabase_url: str | None = None,
         supabase_key: str | None = None,
         gmail_app_password: str | None = None,
@@ -100,15 +106,15 @@ class CredentialStore:
             if openai_key is not None:
                 row.openai_key = encrypt(openai_key)
                 changed_fields.append("openai_key")
-            if twilio_sid is not None:
-                row.twilio_sid = encrypt(twilio_sid)
-                changed_fields.append("twilio_sid")
-            if twilio_token is not None:
-                row.twilio_token = encrypt(twilio_token)
-                changed_fields.append("twilio_token")
-            if twilio_number is not None:
-                row.twilio_number = twilio_number
-                changed_fields.append("twilio_number")
+            if evolution_url is not None:
+                row.evolution_url = evolution_url
+                changed_fields.append("evolution_url")
+            if evolution_api_key is not None:
+                row.evolution_api_key = encrypt(evolution_api_key)
+                changed_fields.append("evolution_api_key")
+            if evolution_instance is not None:
+                row.evolution_instance = evolution_instance
+                changed_fields.append("evolution_instance")
             if supabase_url is not None:
                 row.supabase_url = supabase_url
                 changed_fields.append("supabase_url")
@@ -157,9 +163,9 @@ class CredentialStore:
             "user_id": row.user_id,
             "anthropic_key": _d(row.anthropic_key),
             "openai_key": _d(row.openai_key),
-            "twilio_sid": _d(row.twilio_sid),
-            "twilio_token": _d(row.twilio_token),
-            "twilio_number": row.twilio_number,
+            "evolution_url": row.evolution_url,
+            "evolution_api_key": _d(row.evolution_api_key),
+            "evolution_instance": row.evolution_instance,
             "supabase_url": row.supabase_url,
             "supabase_key": _d(row.supabase_key),
             "gmail_app_password": _d(row.gmail_app_password),

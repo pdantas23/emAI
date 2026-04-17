@@ -1,4 +1,4 @@
-"""WhatsApp transport-layer formatting: char limits, truncation, chunking.
+"""WhatsApp transport-layer formatting: truncation, chunking.
 
 This module is **complementary** to `src/ai/summarizer.py::format_for_whatsapp`.
 The split is intentional and follows the same data/presentation/transport
@@ -14,27 +14,26 @@ layering we use everywhere else in this codebase:
                            ▼
   ┌─────────────────────────────────────────────────────────────────────┐
   │ src/messaging/formatter.py  (you are here)                          │
-  │   • truncate(...)             → ensure ONE message ≤ 4096 chars     │
-  │   • chunk_messages(...)       → pack many messages into ≤4096 batches│
+  │   • truncate(...)             → safety cap for very large messages   │
+  │   • chunk_messages(...)       → pack many messages into batches      │
   └────────────────────────┬────────────────────────────────────────────┘
-                           │ produces a list of payloads, each Twilio-safe
+                           │ produces a list of payloads
                            ▼
   ┌─────────────────────────────────────────────────────────────────────┐
-  │ src/messaging/whatsapp_twilio.py                                    │
-  │   • WhatsAppClient.send_many(payloads)                              │
+  │ src/messaging/evolution_api.py                                      │
+  │   • EvolutionClient.send_many(payloads)                             │
   └─────────────────────────────────────────────────────────────────────┘
 
-Why a separate module instead of stuffing this into the Twilio client?
-Because the transport limit is a property of the **medium**, not the carrier.
-If we ever swap Twilio for a different WhatsApp gateway (or add Telegram
-delivery), the chunking logic stays the same — only the SDK call changes.
+Evolution API does NOT enforce the 1600/4096-char limits that Twilio did.
+We keep a generous 65536-char safety cap and optional chunking for
+readability, but the practical limit is gone.
 """
 
 from __future__ import annotations
 
-# Twilio's documented hard cap for a single WhatsApp message body.
-# Source: https://www.twilio.com/docs/whatsapp/api#sending-messages
-WHATSAPP_MAX_CHARS: int = 4096
+# Safety cap for a single WhatsApp message. Evolution API has no hard limit,
+# but no sane briefing should exceed this.
+WHATSAPP_MAX_CHARS: int = 65_536
 
 # What we append when a single message is longer than the cap. Kept short so
 # the truncation eats as little real content as possible.

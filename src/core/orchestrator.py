@@ -18,7 +18,7 @@ Pipeline (per run)
             • relevance=True  ──► summarize → format → send → persist → mark seen
     3. There is no batch/digest phase. Each relevant email is its own
        standalone WhatsApp message, sent immediately after summarization so
-       Twilio never sees a concatenated body (which previously tripped the
+       Evolution never sees a concatenated body (which previously tripped the
        1600-char error 21617 once more than one email landed in a run).
 
 ----------------------------------------------------------------------------
@@ -74,7 +74,7 @@ from src.ai.summarizer import (
     format_for_whatsapp,
 )
 from src.email_client.base import EmailClient, RawEmail
-from src.messaging.whatsapp_twilio import WhatsAppClient, WhatsAppDeliveryError
+from src.messaging.evolution_api import EvolutionClient, WhatsAppDeliveryError
 from src.storage.models import DeliveryStatus
 from src.storage.state import StateStore, StorageError
 from src.utils.logger import log
@@ -138,7 +138,7 @@ class Orchestrator:
         email_client: EmailClient,
         classifier: EmailClassifier,
         summarizer: EmailSummarizer,
-        whatsapp: WhatsAppClient,
+        whatsapp: EvolutionClient,
         state: StateStore,
     ) -> None:
         self._email = email_client
@@ -278,8 +278,8 @@ class Orchestrator:
         Irrelevant and ready-to-send emails both seal here (persist + mark
         seen), but ready-to-send first issues its own standalone WhatsApp
         `send()`. There is no batching: every relevant email travels to
-        Twilio on its own, which keeps each body well under the 1600-char
-        concatenated-body limit that Twilio enforces (error 21617).
+        Evolution on its own, which keeps each body well under the 1600-char
+        concatenated-body limit that Evolution enforces (error 21617).
         """
         if outcome.kind == "already_processed":
             stats.skipped_already_processed += 1
@@ -296,7 +296,7 @@ class Orchestrator:
                     email=outcome.email,
                     classification=outcome.classification,
                     delivery_status=DeliveryStatus.skipped_irrelevant,
-                    twilio_sids=None,
+                    message_ids=None,
                 )
             except StorageError:
                 # Storage is fail-stop — let it propagate to run()/caller.
@@ -364,7 +364,7 @@ class Orchestrator:
                 email=email,
                 classification=outcome.classification,
                 delivery_status=DeliveryStatus.delivered,
-                twilio_sids=[sid],
+                message_ids=[sid],
             )
         except StorageError:
             # Catastrophic — abort the run; this email reached WhatsApp but
@@ -388,7 +388,7 @@ class Orchestrator:
         email: RawEmail,
         classification: Classification,
         delivery_status: DeliveryStatus,
-        twilio_sids: list[str] | None,
+        message_ids: list[str] | None,
     ) -> None:
         r"""Commit the DB row, THEN mark the IMAP message as `\Seen`.
 
@@ -399,7 +399,7 @@ class Orchestrator:
 
         **Privacy note.** We hand the state store only the non-sensitive
         metadata it is allowed to retain (Message-ID, UID, relevance flag,
-        priority value, delivery status, Twilio SIDs). Everything else we
+        priority value, delivery status, Evolution SIDs). Everything else we
         received — subject, sender, classification reason, summary body —
         stays in this function's memory and is garbage-collected as soon
         as it returns. The state store's signature enforces this too.
@@ -414,7 +414,7 @@ class Orchestrator:
             relevance=classification.relevance,
             priority=classification.priority.value,
             delivery_status=delivery_status,
-            twilio_sids=twilio_sids,
+            message_ids=message_ids,
         )
         log.info(
             "[DONE] uid={} persisted (id={}, status={})",

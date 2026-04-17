@@ -95,13 +95,12 @@ class ProcessedEmail(SQLModel, table=True):
         description="One of DeliveryStatus values (stored as text for portability)",
     )
 
-    # Comma-separated Twilio message SIDs. SIDs are SM[a-zA-Z0-9]{32} —
-    # never contain commas, so CSV is unambiguous and stays human-readable
-    # in psql. JSON would also work but adds dialect-specific noise.
-    twilio_sids: str | None = Field(
+    # Comma-separated message IDs from the messaging gateway (Evolution API).
+    # IDs never contain commas, so CSV is unambiguous and human-readable.
+    message_ids: str | None = Field(
         default=None,
         max_length=2048,
-        description="Comma-separated Twilio message SIDs from successful sends",
+        description="Comma-separated Messaging gateway IDs from successful sends",
     )
 
     # ---- Bookkeeping ----

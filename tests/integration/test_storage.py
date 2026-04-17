@@ -84,7 +84,7 @@ def _persist(
     relevance: bool = True,
     priority: str = Priority.high.value,
     delivery_status: DeliveryStatus = DeliveryStatus.delivered,
-    twilio_sids: list[str] | None = None,
+    message_ids: list[str] | None = None,
 ) -> ProcessedEmail:
     """Thin wrapper that lets each test override only the fields it cares
     about. Mirrors the new `mark_as_processed` signature, which is
@@ -95,7 +95,7 @@ def _persist(
         relevance=relevance,
         priority=priority,
         delivery_status=delivery_status,
-        twilio_sids=twilio_sids,
+        message_ids=message_ids,
     )
 
 
@@ -208,7 +208,7 @@ class TestMarkAsProcessedDelivered:
         self, store: StateStore
     ) -> None:
         """The retained column set is intentionally small: Message-ID, UID,
-        relevance, priority, delivery_status, twilio_sids, processed_at.
+        relevance, priority, delivery_status, message_ids, processed_at.
         Everything else is dropped before we reach the database."""
         sids = ["SM" + "a" * 32, "SM" + "b" * 32]
         record = _persist(
@@ -218,7 +218,7 @@ class TestMarkAsProcessedDelivered:
             relevance=True,
             priority="high",
             delivery_status=DeliveryStatus.delivered,
-            twilio_sids=sids,
+            message_ids=sids,
         )
 
         fetched = store.get("<msg-42@x>")
@@ -229,7 +229,7 @@ class TestMarkAsProcessedDelivered:
         assert fetched.relevance is True
         assert fetched.priority == "high"
         assert fetched.delivery_status == "delivered"
-        assert fetched.twilio_sids == ",".join(sids)
+        assert fetched.message_ids == ",".join(sids)
         # processed_at gets a server-side default we control via default_factory.
         assert fetched.processed_at is not None
 
@@ -252,7 +252,7 @@ class TestMarkAsProcessedDelivered:
         record = _persist(
             store,
             message_id="<audit-1@x>",
-            twilio_sids=["SM" + "x" * 32],
+            message_ids=["SM" + "x" * 32],
         )
 
         info_lines = [r for r in loguru_capture if r["level"].name == "INFO"]
@@ -283,7 +283,7 @@ class TestMarkAsProcessedSkipped:
             relevance=False,
             priority="low",
             delivery_status=DeliveryStatus.skipped_irrelevant,
-            twilio_sids=None,
+            message_ids=None,
         )
 
         fetched = store.get("<skip-1@x>")
@@ -291,7 +291,7 @@ class TestMarkAsProcessedSkipped:
         assert fetched.relevance is False
         assert fetched.priority == "low"
         assert fetched.delivery_status == "skipped_irrelevant"
-        assert fetched.twilio_sids is None
+        assert fetched.message_ids is None
 
 
 # =========================================================================== #
@@ -428,7 +428,7 @@ class TestDeduplication:
             relevance=True,
             priority="high",
             delivery_status=DeliveryStatus.delivered,
-            twilio_sids=["SM" + "1" * 32],
+            message_ids=["SM" + "1" * 32],
         )
 
         # Try to insert a different-content row with the SAME message_id.
@@ -439,7 +439,7 @@ class TestDeduplication:
                 relevance=False,
                 priority="low",
                 delivery_status=DeliveryStatus.skipped_irrelevant,
-                twilio_sids=None,
+                message_ids=None,
             )
 
         # The original row must be untouched.
@@ -449,7 +449,7 @@ class TestDeduplication:
         assert fetched.relevance is True
         assert fetched.priority == "high"
         assert fetched.delivery_status == "delivered"
-        assert fetched.twilio_sids == "SM" + "1" * 32
+        assert fetched.message_ids == "SM" + "1" * 32
 
     def test_different_message_ids_with_same_uid_both_persist(
         self, store: StateStore
