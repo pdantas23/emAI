@@ -43,7 +43,7 @@ import httpx
 import openai
 import pytest
 
-from config.settings import LLMProvider
+from src.ai.llm_client import LLMProvider
 from src.ai.classifier import (
     Classification,
     EmailClassifier,
@@ -213,7 +213,7 @@ class TestLLMClientHappyPath:
         with patch("src.ai.llm_client.anthropic.Anthropic") as MockAnth:
             MockAnth.return_value.messages.create.return_value = _fake_anthropic_response("hi!")
 
-            response = LLMClient().complete("hello")
+            response = LLMClient(anthropic_api_key="sk-ant-fake", openai_api_key="sk-fake").complete("hello")
 
         assert response.text == "hi!"
         assert response.provider == "anthropic"
@@ -232,7 +232,7 @@ class TestLLMClientHappyPath:
                 _fake_anthropic_response("recovered"),
             ]
 
-            response = LLMClient().complete("hello")
+            response = LLMClient(anthropic_api_key="sk-ant-fake", openai_api_key="sk-fake").complete("hello")
 
         assert response.text == "recovered"
         assert response.provider == "anthropic"
@@ -253,7 +253,7 @@ class TestLLMClientFallback:
                 _fake_openai_response("from openai")
             )
 
-            response = LLMClient().complete("hello", model="claude-sonnet-4-6")
+            response = LLMClient(anthropic_api_key="sk-ant-fake", openai_api_key="sk-fake").complete("hello", model="claude-sonnet-4-6")
 
         assert response.text == "from openai"
         assert response.provider == "openai"
@@ -277,7 +277,7 @@ class TestLLMClientFallback:
                 _fake_openai_response("saved by openai")
             )
 
-            response = LLMClient().complete("hello")
+            response = LLMClient(anthropic_api_key="sk-ant-fake", openai_api_key="sk-fake").complete("hello")
 
         assert response.text == "saved by openai"
         assert response.provider == "openai"
@@ -293,7 +293,7 @@ class TestLLMClientFallback:
             MockOAI.return_value.chat.completions.create.side_effect = [_openai_500()] * 3
 
             with pytest.raises(LLMError) as exc_info:
-                LLMClient().complete("hello")
+                LLMClient(anthropic_api_key="sk-ant-fake", openai_api_key="sk-fake").complete("hello")
 
         msg = str(exc_info.value)
         assert "anthropic" in msg.lower() and "openai" in msg.lower()

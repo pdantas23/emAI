@@ -44,7 +44,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field, ValidationError
 
-from config.settings import PROJECT_ROOT, settings
+from config.settings import PROJECT_ROOT
 from src.ai.llm_client import LLMClient, LLMError
 from src.email_client.base import RawEmail
 from src.email_client.parser import extract_text_from_email
@@ -132,9 +132,9 @@ class EmailClassifier:
         prompt_path: Path | None = None,
         model: str | None = None,
     ) -> None:
-        self._llm = llm or LLMClient()
+        self._llm = llm if llm is not None else LLMClient()
         self._prompt_template = (prompt_path or _PROMPT_PATH).read_text(encoding="utf-8")
-        self._model = model or settings.llm.classifier_model
+        self._model = model or getattr(self._llm, "_classifier_model", "claude-haiku-4-5-20251001")
 
     # ------------------------------------------------------------------ #
     # Public API

@@ -69,6 +69,9 @@ class ProcessedEmail(SQLModel, table=True):
     # ---- Primary key & dedup index ----
     id: int | None = Field(default=None, primary_key=True)
 
+    # ---- Multi-user partitioning ----
+    user_id: str | None = Field(default=None, index=True, description="Owner user_id")
+
     message_id: str = Field(
         index=True,
         unique=True,

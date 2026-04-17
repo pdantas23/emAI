@@ -249,7 +249,7 @@ class TestParseSender:
 @pytest.fixture
 def client() -> GmailIMAPClient:
     """Construct a client without connecting (no IMAP I/O)."""
-    return GmailIMAPClient()
+    return GmailIMAPClient(username="test@example.com", password="fake")
 
 
 class TestConvertSimpleEmail:
@@ -419,7 +419,7 @@ class TestFetchUnread:
     def _connected_client_with_messages(
         self, messages: list[Any]
     ) -> tuple[GmailIMAPClient, MagicMock]:
-        client = GmailIMAPClient()
+        client = GmailIMAPClient(username="test@example.com", password="fake")
         mailbox = MagicMock()
         mailbox.fetch.return_value = iter(messages)
         client._mailbox = mailbox  # bypass real connection
@@ -497,14 +497,14 @@ class TestFetchUnread:
         assert {r.uid for r in results} == {"1", "3"}
 
     def test_raises_when_not_connected(self) -> None:
-        client = GmailIMAPClient()
+        client = GmailIMAPClient(username="test@example.com", password="fake")
         with pytest.raises(RuntimeError, match="not connected"):
             list(client.fetch_unread())
 
 
 class TestMarkAsSeen:
     def test_calls_flag_with_seen_true(self) -> None:
-        client = GmailIMAPClient()
+        client = GmailIMAPClient(username="test@example.com", password="fake")
         mailbox = MagicMock()
         client._mailbox = mailbox
 
@@ -512,7 +512,7 @@ class TestMarkAsSeen:
         mailbox.flag.assert_called_once_with("42", "\\Seen", True)
 
     def test_raises_when_not_connected(self) -> None:
-        client = GmailIMAPClient()
+        client = GmailIMAPClient(username="test@example.com", password="fake")
         with pytest.raises(RuntimeError, match="not connected"):
             client.mark_as_seen("42")
 
@@ -523,14 +523,14 @@ class TestContextManager:
         mailbox_instance = MagicMock()
         mailbox_cls.return_value.login.return_value = mailbox_instance
 
-        with GmailIMAPClient() as client:
+        with GmailIMAPClient(username="test@example.com", password="fake") as client:
             assert client._mailbox is mailbox_instance
 
         # After exit, mailbox is released and logout was called
         mailbox_instance.logout.assert_called_once()
 
     def test_disconnect_swallows_logout_errors(self) -> None:
-        client = GmailIMAPClient()
+        client = GmailIMAPClient(username="test@example.com", password="fake")
         mailbox = MagicMock()
         mailbox.logout.side_effect = OSError("connection already dead")
         client._mailbox = mailbox
@@ -541,7 +541,7 @@ class TestContextManager:
 
     def test_connect_is_idempotent(self) -> None:
         """Calling connect() twice should not open a second connection."""
-        client = GmailIMAPClient()
+        client = GmailIMAPClient(username="test@example.com", password="fake")
         sentinel = MagicMock()
         client._mailbox = sentinel
 
@@ -549,7 +549,7 @@ class TestContextManager:
         assert client._mailbox is sentinel
 
     def test_disconnect_when_never_connected_is_noop(self) -> None:
-        client = GmailIMAPClient()
+        client = GmailIMAPClient(username="test@example.com", password="fake")
         client.disconnect()  # should silently return — no AttributeError
         assert client._mailbox is None
 
@@ -566,7 +566,7 @@ class TestContextManager:
         exc.command_result = ("NO", b"bad credentials")
         exc.expected = "OK"
         mailbox_cls.return_value.login.side_effect = exc
-        client = GmailIMAPClient()
+        client = GmailIMAPClient(username="test@example.com", password="fake")
         with pytest.raises(MailboxLoginError):
             client.connect()
         assert client._mailbox is None  # failure leaves us in clean state
@@ -595,7 +595,7 @@ class TestEdgeCases:
     def test_extract_sender_falls_back_to_from_when_no_values(
         self, fixtures_dir: Path
     ) -> None:
-        client = GmailIMAPClient()
+        client = GmailIMAPClient(username="test@example.com", password="fake")
         msg = _load_eml(fixtures_dir / "simple.eml")
         # Simulate imap-tools failing to parse address structure
         msg.from_values = None

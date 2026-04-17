@@ -5,7 +5,7 @@ The orchestrator depends on `LLMClient` ONLY — never on the SDKs directly.
 Switching primary/fallback is therefore a settings change, never a code change.
 
 Retry policy (per call, per provider — implemented via `tenacity`):
-  - 3 attempts max, exponential backoff: 1s → 2s → 4s (capped at 8s)
+  - 3 attempts max, exponential backoff: 1s -> 2s -> 4s (capped at 8s)
   - Retried: network errors, server 5xx, rate limit (429), timeouts
   - NOT retried: auth errors, validation errors, content policy violations
     (these will not get better with retries — fail fast)
@@ -20,6 +20,7 @@ Fallback policy:
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 from typing import Any
 
 import anthropic
@@ -32,8 +33,17 @@ from tenacity import (
     wait_exponential,
 )
 
-from config.settings import LLMProvider, settings
 from src.utils.logger import log
+
+# --------------------------------------------------------------------------- #
+# Provider enum (moved here to avoid circular import with settings)
+# --------------------------------------------------------------------------- #
+
+
+class LLMProvider(str, Enum):
+    anthropic = "anthropic"
+    openai = "openai"
+
 
 # --------------------------------------------------------------------------- #
 # Public types
@@ -112,12 +122,7 @@ _OPENAI_TO_ANTHROPIC: dict[str, str] = {
 
 
 def _translate_model(model: str, *, target: LLMProvider) -> str:
-    """Map a model name to its closest equivalent on the target provider.
-
-    If no mapping exists, the original string is returned — the target SDK
-    will then reject it with a clear `BadRequestError`. That's intentional:
-    we'd rather fail loudly than silently call the wrong model.
-    """
+    """Map a model name to its closest equivalent on the target provider."""
     if target is LLMProvider.openai:
         return _ANTHROPIC_TO_OPENAI.get(model, model)
     return _OPENAI_TO_ANTHROPIC.get(model, model)
@@ -131,33 +136,43 @@ def _translate_model(model: str, *, target: LLMProvider) -> str:
 class LLMClient:
     """Unified, retrying, fallback-capable LLM client.
 
-    Reads provider/model defaults from `settings.llm`. Override per-call via
-    the `model`, `max_tokens`, `temperature` kwargs of `complete()`.
-
-    Example:
-        client = LLMClient()
-        # Cheap classifier call:
-        verdict = client.complete(prompt, model=settings.llm.classifier_model)
-        # Expensive summarization call (uses settings.llm.model by default):
-        summary = client.complete(prompt, system="You are a strict editor.")
+    Accepts API keys via constructor for dependency injection. When keys are
+    not provided, falls back to reading from `config.settings` for backwards
+    compatibility (tests, legacy callers).
     """
 
-    def __init__(self) -> None:
-        cfg = settings.llm
-        self._primary: LLMProvider = cfg.provider
+    def __init__(
+        self,
+        *,
+        anthropic_api_key: str | None = None,
+        openai_api_key: str | None = None,
+        provider: LLMProvider | str = LLMProvider.anthropic,
+        model: str = "claude-sonnet-4-6",
+        classifier_model: str = "claude-haiku-4-5-20251001",
+        max_tokens: int = 2048,
+        temperature: float = 0.3,
+        timeout_seconds: int = 60,
+    ) -> None:
+        if isinstance(provider, str):
+            provider = LLMProvider(provider)
+
+        self._primary: LLMProvider = provider
         self._fallback: LLMProvider = (
             LLMProvider.openai
-            if cfg.provider is LLMProvider.anthropic
+            if provider is LLMProvider.anthropic
             else LLMProvider.anthropic
         )
-        self._default_model: str = cfg.model
-        self._default_max_tokens: int = cfg.max_tokens
-        self._default_temperature: float = cfg.temperature
-        self._timeout: int = cfg.timeout_seconds
+        self._default_model: str = model
+        self._classifier_model: str = classifier_model
+        self._default_max_tokens: int = max_tokens
+        self._default_temperature: float = temperature
+        self._timeout: int = timeout_seconds
+
+        # Store keys for lazy SDK construction
+        self._anthropic_api_key: str | None = anthropic_api_key
+        self._openai_api_key: str | None = openai_api_key
 
         # Lazy SDK clients — built on first use, NOT at import time.
-        # This keeps tests fast and lets the orchestrator construct LLMClient
-        # even when only one provider's API key is configured.
         self._anthropic_sdk: anthropic.Anthropic | None = None
         self._openai_sdk: openai.OpenAI | None = None
 
@@ -175,23 +190,7 @@ class LLMClient:
         temperature: float | None = None,
     ) -> LLMResponse:
         """Send `prompt` to the primary provider; on terminal failure,
-        retry the request with the fallback provider before giving up.
-
-        Args:
-            prompt:        User message.
-            system:        Optional system prompt.
-            model:         Override `settings.llm.model` (e.g. for the cheap
-                           classifier model on filter calls).
-            max_tokens:    Override `settings.llm.max_tokens`.
-            temperature:   Override `settings.llm.temperature`.
-
-        Returns:
-            `LLMResponse` from whichever provider succeeded.
-
-        Raises:
-            LLMError: When both primary and fallback fail. The primary
-                exception is chained via `__cause__` for traceability.
-        """
+        retry the request with the fallback provider before giving up."""
         target_model = model or self._default_model
         max_tok = max_tokens or self._default_max_tokens
         temp = (
@@ -273,7 +272,7 @@ class LLMClient:
     ) -> LLMResponse:
         client = self._anthropic_client()
         log.debug(
-            "→ Anthropic ({}, max_tokens={}, temperature={})",
+            "-> Anthropic ({}, max_tokens={}, temperature={})",
             model, max_tokens, temperature,
         )
 
@@ -288,8 +287,6 @@ class LLMClient:
 
         msg = client.messages.create(**kwargs)
 
-        # Anthropic returns content as a list of typed blocks. The first
-        # text block is what we want; fall back to "" if the response is empty.
         text = ""
         for block in msg.content:
             if getattr(block, "type", None) == "text":
@@ -326,7 +323,7 @@ class LLMClient:
     ) -> LLMResponse:
         client = self._openai_client()
         log.debug(
-            "→ OpenAI ({}, max_tokens={}, temperature={})",
+            "-> OpenAI ({}, max_tokens={}, temperature={})",
             model, max_tokens, temperature,
         )
 
@@ -355,31 +352,33 @@ class LLMClient:
         )
 
     # ------------------------------------------------------------------ #
-    # Lazy SDK client builders — instantiate on first use, never at import
+    # Lazy SDK client builders
     # ------------------------------------------------------------------ #
 
     def _anthropic_client(self) -> anthropic.Anthropic:
         if self._anthropic_sdk is None:
-            api_key = settings.anthropic_api_key
-            if api_key is None:
+            api_key = self._anthropic_api_key
+            if not api_key:
                 raise LLMError(
-                    "Anthropic API key is not configured. Set ANTHROPIC_API_KEY in .env."
+                    "Anthropic API key is not configured. "
+                    "Provision it via the Admin panel or pass anthropic_api_key=."
                 )
             self._anthropic_sdk = anthropic.Anthropic(
-                api_key=api_key.get_secret_value(),
+                api_key=api_key,
                 timeout=float(self._timeout),
             )
         return self._anthropic_sdk
 
     def _openai_client(self) -> openai.OpenAI:
         if self._openai_sdk is None:
-            api_key = settings.openai_api_key
-            if api_key is None:
+            api_key = self._openai_api_key
+            if not api_key:
                 raise LLMError(
-                    "OpenAI API key is not configured. Set OPENAI_API_KEY in .env."
+                    "OpenAI API key is not configured. "
+                    "Provision it via the Admin panel or pass openai_api_key=."
                 )
             self._openai_sdk = openai.OpenAI(
-                api_key=api_key.get_secret_value(),
+                api_key=api_key,
                 timeout=float(self._timeout),
             )
         return self._openai_sdk

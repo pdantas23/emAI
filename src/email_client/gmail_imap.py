@@ -21,23 +21,36 @@ from typing import Any
 
 from imap_tools import AND, MailBox, MailboxLoginError, MailMessage
 
-from config.settings import settings
 from src.email_client.base import Attachment, EmailClient, RawEmail
 from src.utils.logger import log
 
 
 class GmailIMAPClient(EmailClient):
-    """IMAP client implementation. Reads connection settings from `settings.imap`."""
+    """IMAP client implementation.
 
-    def __init__(self) -> None:
-        cfg = settings.imap
-        self._host: str = cfg.host
-        self._port: int = cfg.port
-        self._username: str = cfg.username
-        self._password: str = cfg.password.get_secret_value()
-        self._folder: str = cfg.folder
-        self._fetch_limit: int = cfg.fetch_limit
-        self._max_attachment_bytes: int = settings.filters.attachment_max_mb * 1024 * 1024
+    Accepts connection parameters via constructor for dependency injection.
+    The orchestrator builds this from `UserRuntimeConfig`; no global
+    `settings` singleton is read.
+    """
+
+    def __init__(
+        self,
+        *,
+        host: str = "imap.gmail.com",
+        port: int = 993,
+        username: str,
+        password: str,
+        folder: str = "INBOX",
+        fetch_limit: int = 50,
+        attachment_max_mb: int = 10,
+    ) -> None:
+        self._host: str = host
+        self._port: int = port
+        self._username: str = username
+        self._password: str = password
+        self._folder: str = folder
+        self._fetch_limit: int = fetch_limit
+        self._max_attachment_bytes: int = attachment_max_mb * 1024 * 1024
         self._mailbox: MailBox | None = None
 
     # ------------------------------------------------------------------ #
@@ -170,7 +183,7 @@ class GmailIMAPClient(EmailClient):
                 "Attachment '{}' ({:.1f} MB) exceeds {} MB limit — skipping payload",
                 att.filename,
                 size / (1024 * 1024),
-                settings.filters.attachment_max_mb,
+                self._max_attachment_bytes // (1024 * 1024),
             )
         return Attachment(
             filename=att.filename or "unnamed",

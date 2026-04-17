@@ -78,7 +78,13 @@ def _make_client(mock_sdk: MagicMock | None = None) -> tuple[WhatsAppClient, Mag
     call arguments without re-deriving the path through the SDK tree.
     """
     sdk = mock_sdk or MagicMock(name="TwilioClient")
-    return WhatsAppClient(client=sdk), sdk
+    return WhatsAppClient(
+        account_sid="ACxxx",
+        auth_token="fake-token",
+        whatsapp_from="whatsapp:+14155238886",
+        whatsapp_to="whatsapp:+5511999999999",
+        client=sdk,
+    ), sdk
 
 
 # =========================================================================== #
@@ -253,7 +259,10 @@ class TestSendHappyPath:
         """No injected client → `_client` is None until first send. Important
         because the orchestrator may construct the client at startup before
         we're sure the network is reachable."""
-        client = WhatsAppClient()
+        client = WhatsAppClient(
+            account_sid="ACxxx", auth_token="fake",
+            whatsapp_from="whatsapp:+14155238886", whatsapp_to="whatsapp:+5511999999999",
+        )
         assert client._client is None
 
     def test_lazy_sdk_built_with_account_credentials_on_first_use(
@@ -275,7 +284,10 @@ class TestSendHappyPath:
             "src.messaging.whatsapp_twilio.TwilioClient", fake_twilio_ctor
         )
 
-        client = WhatsAppClient()  # no client= injected
+        client = WhatsAppClient(
+            account_sid="ACxxx", auth_token="fake-token",
+            whatsapp_from="whatsapp:+14155238886", whatsapp_to="whatsapp:+5511999999999",
+        )  # no client= injected
         assert client.send("hi") == "SM-lazy"
         # Credentials were forwarded to the SDK constructor — exactly once.
         assert captured["sid"].startswith("AC")

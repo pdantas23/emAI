@@ -85,8 +85,9 @@ class StateStore:
     to `settings.database_url`.
     """
 
-    def __init__(self, engine: Engine | None = None) -> None:
+    def __init__(self, engine: Engine | None = None, *, user_id: str | None = None) -> None:
         self._engine: Engine = engine or _build_engine(settings.database_url)
+        self._user_id: str | None = user_id
         self._verify_connection()
         self._ensure_tables()
 
@@ -146,6 +147,7 @@ class StateStore:
                 schema drift, ...). Pipeline is expected to halt.
         """
         record = ProcessedEmail(
+            user_id=self._user_id,
             message_id=message_id,
             uid=uid,
             relevance=relevance,

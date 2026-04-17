@@ -41,7 +41,6 @@ from tenacity import (
     wait_exponential,
 )
 
-from config.settings import settings
 from src.messaging.formatter import chunk_messages, truncate
 from src.utils.logger import log
 
@@ -102,17 +101,24 @@ def _log_before_sleep(state: RetryCallState) -> None:
 class WhatsAppClient:
     """Thin wrapper around the Twilio REST client for WhatsApp delivery.
 
-    Reads sender/recipient/credentials from `settings`. The Twilio SDK is
-    instantiated lazily so tests can construct `WhatsAppClient()` without
-    valid credentials and inject a mock via the `client` parameter.
+    Accepts credentials via constructor for dependency injection. The
+    orchestrator builds this from `UserRuntimeConfig`; no global `settings`
+    singleton is read.
     """
 
-    def __init__(self, *, client: TwilioClient | None = None) -> None:
-        cfg = settings.whatsapp
-        self._sender: str = cfg.whatsapp_from
-        self._recipient: str = settings.whatsapp_to
-        self._account_sid: str = cfg.account_sid.get_secret_value()
-        self._auth_token: str = cfg.auth_token.get_secret_value()
+    def __init__(
+        self,
+        *,
+        account_sid: str,
+        auth_token: str,
+        whatsapp_from: str,
+        whatsapp_to: str,
+        client: TwilioClient | None = None,
+    ) -> None:
+        self._sender: str = whatsapp_from
+        self._recipient: str = whatsapp_to
+        self._account_sid: str = account_sid
+        self._auth_token: str = auth_token
         # Allow injection for tests; otherwise build lazily on first send.
         self._client: TwilioClient | None = client
 

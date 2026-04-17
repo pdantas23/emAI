@@ -1139,7 +1139,13 @@ class TestRealCollaboratorContract:
             email_client=FakeEmailClient([]),
             classifier=EmailClassifier(llm=_NullLLM()),  # type: ignore[arg-type]
             summarizer=EmailSummarizer(llm=_NullLLM()),  # type: ignore[arg-type]
-            whatsapp=WhatsAppClient(client=_NullTwilio()),  # type: ignore[arg-type]
+            whatsapp=WhatsAppClient(
+                account_sid="ACxxx",
+                auth_token="fake",
+                whatsapp_from="whatsapp:+14155238886",
+                whatsapp_to="whatsapp:+5511999999999",
+                client=_NullTwilio(),  # type: ignore[arg-type]
+            ),
             state=store,
         )
         # An empty-inbox run must work end-to-end with the real classes.
