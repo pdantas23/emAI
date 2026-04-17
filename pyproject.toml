@@ -1,0 +1,96 @@
+[project]
+name = "emai"
+version = "0.1.0"
+description = "AI agent that triages unread emails via IMAP and sends executive summaries to WhatsApp."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "Philip" },
+]
+license = { text = "Proprietary" }
+
+dependencies = [
+    # Email ingestion
+    "imap-tools>=1.7.0",
+    "beautifulsoup4>=4.12.3",
+    "html2text>=2024.2.26",
+    "email-validator>=2.2.0",
+
+    # Configuration & validation
+    "pydantic>=2.8.0",
+    "pydantic-settings>=2.5.0",
+    "python-dotenv>=1.0.1",
+    "pyyaml>=6.0.2",
+
+    # LLM providers
+    "anthropic>=0.40.0",
+    "openai>=1.50.0",
+    "tiktoken>=0.8.0",
+
+    # Resilience & observability
+    "tenacity>=9.0.0",
+    "loguru>=0.7.2",
+
+    # Storage (state of processed emails)
+    "sqlmodel>=0.0.22",
+    # Postgres driver — required for Supabase. Plain `postgresql://...` URLs
+    # use this driver by default; SQLite is used in tests/dev (built-in).
+    "psycopg2-binary>=2.9.9",
+
+    # WhatsApp messaging (Twilio default; swap for Meta Cloud if preferred)
+    "twilio>=9.3.0",
+
+    # Scheduling (in-process; cron/systemd preferred in prod)
+    "apscheduler>=3.10.4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=5.0.0",
+    "ruff>=0.6.0",
+    "mypy>=1.11.0",
+    "types-pyyaml>=6.0.12",
+    "rich>=13.8.0",
+]
+
+[project.scripts]
+emai = "src.main:run"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+# ---------- Tooling ----------
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "W",   # pycodestyle / pyflakes
+    "I",             # isort
+    "B",             # bugbear
+    "UP",            # pyupgrade
+    "SIM",           # simplify
+    "TID",           # tidy-imports
+    "RUF",           # ruff-specific
+]
+ignore = ["E501"]  # line length handled by formatter
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-ra --strict-markers --cov=src --cov-report=term-missing"

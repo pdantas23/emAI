@@ -1,0 +1,825 @@
+{
+  "metadata": {
+    "title": "emAI — Project Architecture Graph",
+    "version": "v0.1",
+    "generated_at": "2026-04-16",
+    "description": "Architecture graph of the emAI project showing folder/file structure with implementation status and dependency flow.",
+    "legend": {
+      "status": {
+        "GREEN": {
+          "color": "#2ecc71",
+          "meaning": "Finalizado e validado"
+        },
+        "YELLOW": {
+          "color": "#f1c40f",
+          "meaning": "Em desenvolvimento / Draft"
+        },
+        "GRAY": {
+          "color": "#bdc3c7",
+          "meaning": "Planejado (ainda não criado)"
+        }
+      },
+      "node_type": {
+        "folder": {
+          "shape": "box",
+          "color": "#3498db",
+          "meaning": "Módulo / diretório"
+        },
+        "file": {
+          "shape": "dot",
+          "meaning": "Arquivo concreto"
+        }
+      },
+      "edge_type": {
+        "contains": {
+          "style": "dashed gray, no arrow",
+          "meaning": "Folder contém arquivo"
+        },
+        "depends_on": {
+          "style": "solid blue, arrow",
+          "meaning": "Dependência / fluxo de dados"
+        }
+      }
+    }
+  },
+  "stats": {
+    "folders": 16,
+    "files_total": 50,
+    "files_green": 30,
+    "files_yellow": 0,
+    "files_gray": 20,
+    "containment_edges": 50,
+    "dependency_edges": 53,
+    "completion_percent": 60.0,
+    "mvp_ready": true,
+    "test_suite": {
+      "tests": 257,
+      "passing": 257,
+      "coverage_email_client_pct": 100,
+      "coverage_messaging_pct": 100,
+      "coverage_storage_pct": 100,
+      "coverage_ai_pct": 98,
+      "coverage_orchestrator_pct": 100,
+      "coverage_main_pct": 95,
+      "coverage_global_pct": 98
+    }
+  },
+  "nodes": [
+    {
+      "id": "emAI",
+      "label": "emAI/",
+      "type": "folder",
+      "status": null
+    },
+    {
+      "id": "src",
+      "label": "src/",
+      "type": "folder",
+      "status": null,
+      "parent": "emAI"
+    },
+    {
+      "id": "src/core",
+      "label": "core/",
+      "type": "folder",
+      "status": null,
+      "parent": "src"
+    },
+    {
+      "id": "src/email_client",
+      "label": "email_client/",
+      "type": "folder",
+      "status": null,
+      "parent": "src"
+    },
+    {
+      "id": "src/filters",
+      "label": "filters/",
+      "type": "folder",
+      "status": null,
+      "parent": "src"
+    },
+    {
+      "id": "src/ai",
+      "label": "ai/",
+      "type": "folder",
+      "status": null,
+      "parent": "src"
+    },
+    {
+      "id": "src/messaging",
+      "label": "messaging/",
+      "type": "folder",
+      "status": null,
+      "parent": "src"
+    },
+    {
+      "id": "src/storage",
+      "label": "storage/",
+      "type": "folder",
+      "status": null,
+      "parent": "src"
+    },
+    {
+      "id": "src/utils",
+      "label": "utils/",
+      "type": "folder",
+      "status": null,
+      "parent": "src"
+    },
+    {
+      "id": "config",
+      "label": "config/",
+      "type": "folder",
+      "status": null,
+      "parent": "emAI"
+    },
+    {
+      "id": "prompts",
+      "label": "prompts/",
+      "type": "folder",
+      "status": null,
+      "parent": "emAI"
+    },
+    {
+      "id": "tests",
+      "label": "tests/",
+      "type": "folder",
+      "status": null,
+      "parent": "emAI"
+    },
+    {
+      "id": "tests/unit",
+      "label": "tests/unit/",
+      "type": "folder",
+      "status": null,
+      "parent": "tests"
+    },
+    {
+      "id": "tests/integration",
+      "label": "tests/integration/",
+      "type": "folder",
+      "status": null,
+      "parent": "tests"
+    },
+    {
+      "id": "tests/fixtures",
+      "label": "tests/fixtures/",
+      "type": "folder",
+      "status": null,
+      "parent": "tests"
+    },
+    {
+      "id": "logs",
+      "label": "logs/",
+      "type": "folder",
+      "status": null,
+      "parent": "emAI"
+    },
+    {
+      "id": "pyproject.toml",
+      "label": "pyproject.toml",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "emAI"
+    },
+    {
+      "id": ".env.example",
+      "label": ".env.example",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "emAI"
+    },
+    {
+      "id": ".gitignore",
+      "label": ".gitignore",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "emAI"
+    },
+    {
+      "id": "README.md",
+      "label": "README.md",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "emAI"
+    },
+    {
+      "id": ".env",
+      "label": ".env",
+      "type": "file",
+      "status": "GRAY",
+      "parent": "emAI"
+    },
+    {
+      "id": "docker-compose.yml",
+      "label": "docker-compose.yml",
+      "type": "file",
+      "status": "GRAY",
+      "parent": "emAI"
+    },
+    {
+      "id": "src/__init__.py",
+      "label": "__init__.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "src"
+    },
+    {
+      "id": "src/main.py",
+      "label": "main.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "src"
+    },
+    {
+      "id": "src/core/__init__.py",
+      "label": "__init__.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "src/core"
+    },
+    {
+      "id": "src/core/orchestrator.py",
+      "label": "orchestrator.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "src/core"
+    },
+    {
+      "id": "src/core/exceptions.py",
+      "label": "exceptions.py",
+      "type": "file",
+      "status": "GRAY",
+      "parent": "src/core"
+    },
+    {
+      "id": "src/email_client/__init__.py",
+      "label": "__init__.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "src/email_client"
+    },
+    {
+      "id": "src/email_client/base.py",
+      "label": "base.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "src/email_client"
+    },
+    {
+      "id": "src/email_client/gmail_imap.py",
+      "label": "gmail_imap.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "src/email_client"
+    },
+    {
+      "id": "src/email_client/outlook_imap.py",
+      "label": "outlook_imap.py",
+      "type": "file",
+      "status": "GRAY",
+      "parent": "src/email_client"
+    },
+    {
+      "id": "src/email_client/parser.py",
+      "label": "parser.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "src/email_client"
+    },
+    {
+      "id": "src/filters/__init__.py",
+      "label": "__init__.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "src/filters"
+    },
+    {
+      "id": "src/filters/spam_filter.py",
+      "label": "spam_filter.py",
+      "type": "file",
+      "status": "GRAY",
+      "parent": "src/filters"
+    },
+    {
+      "id": "src/filters/relevance_filter.py",
+      "label": "relevance_filter.py",
+      "type": "file",
+      "status": "GRAY",
+      "parent": "src/filters"
+    },
+    {
+      "id": "src/filters/rules.py",
+      "label": "rules.py",
+      "type": "file",
+      "status": "GRAY",
+      "parent": "src/filters"
+    },
+    {
+      "id": "src/ai/__init__.py",
+      "label": "__init__.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "src/ai"
+    },
+    {
+      "id": "src/ai/llm_client.py",
+      "label": "llm_client.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "src/ai"
+    },
+    {
+      "id": "src/ai/summarizer.py",
+      "label": "summarizer.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "src/ai"
+    },
+    {
+      "id": "src/ai/classifier.py",
+      "label": "classifier.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "src/ai"
+    },
+    {
+      "id": "src/messaging/__init__.py",
+      "label": "__init__.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "src/messaging"
+    },
+    {
+      "id": "src/messaging/base.py",
+      "label": "base.py",
+      "type": "file",
+      "status": "GRAY",
+      "parent": "src/messaging"
+    },
+    {
+      "id": "src/messaging/whatsapp_twilio.py",
+      "label": "whatsapp_twilio.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "src/messaging"
+    },
+    {
+      "id": "src/messaging/whatsapp_evolution.py",
+      "label": "whatsapp_evolution.py",
+      "type": "file",
+      "status": "GRAY",
+      "parent": "src/messaging"
+    },
+    {
+      "id": "src/messaging/formatter.py",
+      "label": "formatter.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "src/messaging"
+    },
+    {
+      "id": "src/storage/__init__.py",
+      "label": "__init__.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "src/storage"
+    },
+    {
+      "id": "src/storage/state.py",
+      "label": "state.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "src/storage"
+    },
+    {
+      "id": "src/storage/models.py",
+      "label": "models.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "src/storage"
+    },
+    {
+      "id": "src/utils/__init__.py",
+      "label": "__init__.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "src/utils"
+    },
+    {
+      "id": "src/utils/logger.py",
+      "label": "logger.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "src/utils"
+    },
+    {
+      "id": "src/utils/retry.py",
+      "label": "retry.py",
+      "type": "file",
+      "status": "GRAY",
+      "parent": "src/utils"
+    },
+    {
+      "id": "config/__init__.py",
+      "label": "__init__.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "config"
+    },
+    {
+      "id": "config/settings.py",
+      "label": "settings.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "config"
+    },
+    {
+      "id": "config/filter_rules.yaml",
+      "label": "filter_rules.yaml",
+      "type": "file",
+      "status": "GRAY",
+      "parent": "config"
+    },
+    {
+      "id": "config/senders_whitelist.yaml",
+      "label": "senders_whitelist.yaml",
+      "type": "file",
+      "status": "GRAY",
+      "parent": "config"
+    },
+    {
+      "id": "prompts/summarize_executive.md",
+      "label": "summarize_executive.md",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "prompts"
+    },
+    {
+      "id": "prompts/classify_priority.md",
+      "label": "classify_priority.md",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "prompts"
+    },
+    {
+      "id": "prompts/extract_actions.md",
+      "label": "extract_actions.md",
+      "type": "file",
+      "status": "GRAY",
+      "parent": "prompts"
+    },
+    {
+      "id": "tests/__init__.py",
+      "label": "__init__.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "tests"
+    },
+    {
+      "id": "tests/conftest.py",
+      "label": "conftest.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "tests"
+    },
+    {
+      "id": "tests/integration/__init__.py",
+      "label": "__init__.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "tests/integration"
+    },
+    {
+      "id": "tests/integration/test_email_client.py",
+      "label": "test_email_client.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "tests/integration"
+    },
+    {
+      "id": "tests/fixtures/simple.eml",
+      "label": "simple.eml",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "tests/fixtures"
+    },
+    {
+      "id": "tests/fixtures/html_heavy.eml",
+      "label": "html_heavy.eml",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "tests/fixtures"
+    },
+    {
+      "id": "tests/fixtures/with_attachment.eml",
+      "label": "with_attachment.eml",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "tests/fixtures"
+    },
+    {
+      "id": "tests/integration/test_ai.py",
+      "label": "test_ai.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "tests/integration"
+    },
+    {
+      "id": "tests/integration/test_messaging.py",
+      "label": "test_messaging.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "tests/integration"
+    },
+    {
+      "id": "tests/integration/test_storage.py",
+      "label": "test_storage.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "tests/integration"
+    },
+    {
+      "id": "tests/integration/test_orchestrator.py",
+      "label": "test_orchestrator.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "tests/integration"
+    },
+    {
+      "id": "tests/integration/test_main.py",
+      "label": "test_main.py",
+      "type": "file",
+      "status": "GREEN",
+      "parent": "tests/integration"
+    }
+  ],
+  "edges": [
+    {
+      "source": "src/main.py",
+      "target": "src/core/orchestrator.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/core/orchestrator.py",
+      "target": "src/email_client/base.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/core/orchestrator.py",
+      "target": "src/filters/spam_filter.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/core/orchestrator.py",
+      "target": "src/filters/relevance_filter.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/core/orchestrator.py",
+      "target": "src/ai/summarizer.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/core/orchestrator.py",
+      "target": "src/ai/classifier.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/core/orchestrator.py",
+      "target": "src/messaging/base.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/core/orchestrator.py",
+      "target": "src/storage/state.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/email_client/gmail_imap.py",
+      "target": "src/email_client/base.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/email_client/gmail_imap.py",
+      "target": "src/email_client/parser.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/email_client/outlook_imap.py",
+      "target": "src/email_client/base.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/email_client/outlook_imap.py",
+      "target": "src/email_client/parser.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/filters/spam_filter.py",
+      "target": "src/filters/rules.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/filters/relevance_filter.py",
+      "target": "config/senders_whitelist.yaml",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/filters/rules.py",
+      "target": "config/filter_rules.yaml",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/ai/summarizer.py",
+      "target": "src/ai/llm_client.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/ai/classifier.py",
+      "target": "src/ai/llm_client.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/ai/summarizer.py",
+      "target": "prompts/summarize_executive.md",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/ai/classifier.py",
+      "target": "prompts/classify_priority.md",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/messaging/whatsapp_twilio.py",
+      "target": "src/messaging/base.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/messaging/whatsapp_twilio.py",
+      "target": "src/messaging/formatter.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/messaging/whatsapp_evolution.py",
+      "target": "src/messaging/base.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/messaging/whatsapp_evolution.py",
+      "target": "src/messaging/formatter.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/storage/state.py",
+      "target": "src/storage/models.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/core/orchestrator.py",
+      "target": "config/settings.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/email_client/gmail_imap.py",
+      "target": "config/settings.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/email_client/outlook_imap.py",
+      "target": "config/settings.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/filters/spam_filter.py",
+      "target": "config/settings.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/filters/relevance_filter.py",
+      "target": "config/settings.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/ai/llm_client.py",
+      "target": "config/settings.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/ai/summarizer.py",
+      "target": "config/settings.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/ai/classifier.py",
+      "target": "config/settings.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/messaging/whatsapp_twilio.py",
+      "target": "config/settings.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/messaging/whatsapp_evolution.py",
+      "target": "config/settings.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/storage/state.py",
+      "target": "config/settings.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/core/orchestrator.py",
+      "target": "src/utils/logger.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/email_client/gmail_imap.py",
+      "target": "src/utils/logger.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/email_client/outlook_imap.py",
+      "target": "src/utils/logger.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/filters/spam_filter.py",
+      "target": "src/utils/logger.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/filters/relevance_filter.py",
+      "target": "src/utils/logger.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/ai/llm_client.py",
+      "target": "src/utils/logger.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/ai/summarizer.py",
+      "target": "src/utils/logger.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/ai/classifier.py",
+      "target": "src/utils/logger.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/messaging/whatsapp_twilio.py",
+      "target": "src/utils/logger.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/messaging/whatsapp_evolution.py",
+      "target": "src/utils/logger.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/storage/state.py",
+      "target": "src/utils/logger.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/main.py",
+      "target": "config/settings.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/main.py",
+      "target": "src/email_client/gmail_imap.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/main.py",
+      "target": "src/ai/classifier.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/main.py",
+      "target": "src/ai/summarizer.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/main.py",
+      "target": "src/messaging/whatsapp_twilio.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/main.py",
+      "target": "src/storage/state.py",
+      "type": "depends_on"
+    },
+    {
+      "source": "src/main.py",
+      "target": "src/utils/logger.py",
+      "type": "depends_on"
+    }
+  ]
+}

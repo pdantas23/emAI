@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<title>emAI — Project Architecture Graph (v0.1, 2026-04-16)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1419;
+    --panel: #1a2230;
+    --border: #2c3a4f;
+    --text: #e6edf3;
+    --text-dim: #8b95a5;
+    --green: #2ecc71;
+    --yellow: #f1c40f;
+    --gray: #bdc3c7;
+    --folder: #3498db;
+    --edge-dep: #5dade2;
+    --edge-contain: #4a5568;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); color: var(--text);
+               font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  header { padding: 14px 24px; border-bottom: 1px solid var(--border); display: flex;
+           justify-content: space-between; align-items: center; }
+  header h1 { font-size: 16px; margin: 0; font-weight: 600; }
+  header .sub { font-size: 12px; color: var(--text-dim); }
+  #wrap { display: grid; grid-template-columns: 280px 1fr; height: calc(100vh - 53px); }
+  aside { background: var(--panel); border-right: 1px solid var(--border);
+          padding: 18px; overflow-y: auto; font-size: 13px; }
+  aside h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+             color: var(--text-dim); margin: 18px 0 8px; font-weight: 600; }
+  aside h2:first-child { margin-top: 0; }
+  .legend-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; }
+  .swatch { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.08); }
+  .swatch.dot { border-radius: 50%; }
+  .swatch.box { border: 2px solid var(--folder); background: transparent; }
+  .swatch.line { width: 28px; height: 2px; border-radius: 0; border: 0; }
+  .swatch.line.dashed { background: repeating-linear-gradient(to right, var(--edge-contain) 0 4px, transparent 4px 8px); }
+  .swatch.line.solid { background: var(--edge-dep); }
+  .stat { display: flex; justify-content: space-between; padding: 4px 0;
+          color: var(--text); font-variant-numeric: tabular-nums; }
+  .stat span:first-child { color: var(--text-dim); }
+  .progress-track { background: rgba(255,255,255,0.05); border-radius: 4px;
+                    height: 6px; overflow: hidden; margin-top: 8px; }
+  .progress-fill { background: var(--green); height: 100%; transition: width 0.6s ease; }
+  #graph { background: var(--bg); }
+  #info { position: absolute; bottom: 16px; right: 16px; max-width: 360px;
+          background: var(--panel); border: 1px solid var(--border); border-radius: 6px;
+          padding: 12px 14px; font-size: 12px; line-height: 1.5; display: none; }
+  #info code { background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 3px; font-size: 11px; }
+  .controls { display: flex; gap: 6px; margin-top: 6px; }
+  .controls button { background: transparent; border: 1px solid var(--border); color: var(--text);
+                     padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; }
+  .controls button:hover { background: rgba(255,255,255,0.05); }
+</style>
+</head>
+<body>
+<header>
+  <h1>emAI — Project Architecture Graph <span style="color:var(--text-dim); font-weight:400">v0.1 · 2026-04-16</span></h1>
+  <span class="sub" id="hint">Click a node to inspect · scroll to zoom · drag to pan</span>
+</header>
+<div id="wrap">
+  <aside>
+    <h2>Status</h2>
+    <div class="legend-row"><div class="swatch dot" style="background:var(--green)"></div><span>Finalizado (validado)</span></div>
+    <div class="legend-row"><div class="swatch dot" style="background:var(--yellow)"></div><span>Em desenvolvimento</span></div>
+    <div class="legend-row"><div class="swatch dot" style="background:var(--gray)"></div><span>Planejado</span></div>
+    <div class="legend-row"><div class="swatch box"></div><span>Pasta / módulo</span></div>
+
+    <h2>Edges</h2>
+    <div class="legend-row"><div class="swatch line solid"></div><span>Dependência (fluxo)</span></div>
+    <div class="legend-row"><div class="swatch line dashed"></div><span>Contém (containment)</span></div>
+
+    <h2>Stats</h2>
+    <div class="stat"><span>Pastas</span><span id="s-folders">—</span></div>
+    <div class="stat"><span>Arquivos planejados</span><span id="s-total">—</span></div>
+    <div class="stat"><span style="color:var(--green)">Finalizados</span><span id="s-green">—</span></div>
+    <div class="stat"><span style="color:var(--yellow)">Em dev</span><span id="s-yellow">—</span></div>
+    <div class="stat"><span style="color:var(--gray)">Planejados</span><span id="s-gray">—</span></div>
+    <div class="stat"><span>Edges totais</span><span id="s-edges">—</span></div>
+    <div class="stat" style="margin-top:8px"><span>Conclusão</span><span id="s-pct">—</span></div>
+    <div class="progress-track"><div class="progress-fill" id="s-bar" style="width:0%"></div></div>
+
+    <h2>Layout</h2>
+    <div class="controls">
+      <button onclick="setLayout('hier')">Hierárquico</button>
+      <button onclick="setLayout('force')">Força</button>
+      <button onclick="network.fit()">Ajustar</button>
+    </div>
+  </aside>
+  <div id="graph"></div>
+</div>
+<div id="info"></div>
+
+<script>
+const STATUS_COLOR = { GREEN:'#2ecc71', YELLOW:'#f1c40f', GRAY:'#bdc3c7' };
+const FOLDER_COLOR = '#3498db';
+const EDGE_DEP     = '#5dade2';
+const EDGE_CONTAIN = '#4a5568';
+
+let network, nodesDS, edgesDS, graphData;
+
+fetch('graph.json').then(r => r.json()).then(data => { graphData = data; build(data); });
+
+function build(data) {
+  // Stats
+  document.getElementById('s-folders').textContent = data.stats.folders;
+  document.getElementById('s-total').textContent   = data.stats.files_total;
+  document.getElementById('s-green').textContent   = data.stats.files_green;
+  document.getElementById('s-yellow').textContent  = data.stats.files_yellow;
+  document.getElementById('s-gray').textContent    = data.stats.files_gray;
+  document.getElementById('s-edges').textContent   = data.stats.containment_edges + data.stats.dependency_edges;
+  document.getElementById('s-pct').textContent     = data.stats.completion_percent.toFixed(1) + '%';
+  document.getElementById('s-bar').style.width     = data.stats.completion_percent + '%';
+
+  // Nodes
+  const nodes = data.nodes.map(n => {
+    if (n.type === 'folder') {
+      return {
+        id: n.id, label: n.label, shape: 'box', color: { background: 'rgba(52,152,219,0.12)',
+        border: FOLDER_COLOR, highlight: { background: 'rgba(52,152,219,0.22)', border: '#5dade2' } },
+        font: { color: '#e6edf3', size: 14, face: 'system-ui', bold: true },
+        borderWidth: 2, margin: 8,
+        title: `<b>${n.label}</b><br/>módulo / pasta`
+      };
+    }
+    const c = STATUS_COLOR[n.status] || STATUS_COLOR.GRAY;
+    return {
+      id: n.id, label: n.label, shape: 'dot', size: 12,
+      color: { background: c, border: c, highlight: { background: '#fff', border: c } },
+      font: { color: '#cdd6e0', size: 11, face: 'system-ui' },
+      title: `<b>${n.label}</b><br/>status: ${n.status}<br/><code>${n.id}</code>`
+    };
+  });
+
+  // Containment edges (from parent attribute)
+  const containEdges = data.nodes.filter(n => n.parent).map(n => ({
+    from: n.parent, to: n.id, dashes: [4,6], color: { color: EDGE_CONTAIN, opacity: 0.5 },
+    width: 1, arrows: { to: { enabled: false } }, smooth: { type: 'cubicBezier', forceDirection: 'vertical', roundness: 0.4 }
+  }));
+
+  // Dependency edges
+  const depEdges = data.edges.map(e => ({
+    from: e.source, to: e.target,
+    color: { color: EDGE_DEP, highlight: '#fff', opacity: 0.85 },
+    width: 1.6, arrows: { to: { enabled: true, scaleFactor: 0.5 } },
+    smooth: { type: 'continuous', roundness: 0.2 },
+    title: `${e.source} → ${e.target}<br/><i>depends on</i>`
+  }));
+
+  nodesDS = new vis.DataSet(nodes);
+  edgesDS = new vis.DataSet([...containEdges, ...depEdges]);
+
+  network = new vis.Network(
+    document.getElementById('graph'),
+    { nodes: nodesDS, edges: edgesDS },
+    optionsForce()
+  );
+
+  network.on('click', params => {
+    const info = document.getElementById('info');
+    if (params.nodes.length === 0) { info.style.display = 'none'; return; }
+    const id = params.nodes[0];
+    const node = data.nodes.find(n => n.id === id);
+    if (!node) return;
+    const incoming = data.edges.filter(e => e.target === id).map(e => e.source);
+    const outgoing = data.edges.filter(e => e.source === id).map(e => e.target);
+    info.innerHTML = `
+      <div style="font-weight:600; margin-bottom:6px">${node.label}</div>
+      <div style="color:var(--text-dim); margin-bottom:8px"><code>${node.id}</code></div>
+      <div>Tipo: <b>${node.type}</b>${node.status ? ` · Status: <b style="color:${STATUS_COLOR[node.status]}">${node.status}</b>` : ''}</div>
+      ${incoming.length ? `<div style="margin-top:8px"><b>← depende deste:</b><br/>${incoming.map(s=>'<code>'+s+'</code>').join('<br/>')}</div>` : ''}
+      ${outgoing.length ? `<div style="margin-top:8px"><b>→ depende de:</b><br/>${outgoing.map(s=>'<code>'+s+'</code>').join('<br/>')}</div>` : ''}
+    `;
+    info.style.display = 'block';
+  });
+}
+
+function optionsForce() {
+  return {
+    physics: { enabled: true, solver: 'barnesHut',
+      barnesHut: { gravitationalConstant: -8000, springLength: 110, springConstant: 0.04, damping: 0.4 },
+      stabilization: { iterations: 250 } },
+    interaction: { hover: true, tooltipDelay: 150, navigationButtons: false, keyboard: true },
+    layout: { improvedLayout: true }
+  };
+}
+function optionsHier() {
+  return {
+    physics: { enabled: false },
+    layout: { hierarchical: { enabled: true, direction: 'UD', sortMethod: 'directed',
+      levelSeparation: 130, nodeSpacing: 130, treeSpacing: 180 } },
+    interaction: { hover: true, tooltipDelay: 150 }
+  };
+}
+function setLayout(mode) {
+  if (!network) return;
+  network.setOptions(mode === 'hier' ? optionsHier() : optionsForce());
+  setTimeout(() => network.fit(), 300);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+From: Marketing Newsletter <news@marketing.example.com>
+To: me@example.com
+Subject: Promocao especial 50 porcento off
+Date: Wed, 16 Apr 2026 08:00:00 -0300
+Message-ID: <html-heavy-456@marketing.example.com>
+X-Spam-Status: Yes, score=7.2 required=5.0
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="boundary-html-heavy"
+
+--boundary-html-heavy
+Content-Type: text/plain; charset=utf-8
+
+Promocao Especial: 50% off em tudo!
+
+Acesse https://promo.example.com para aproveitar.
+
+--boundary-html-heavy
+Content-Type: text/html; charset=utf-8
+
+<html>
+<head>
+  <title>Promocao</title>
+  <style>body { font-family: Arial; } .hidden { display:none; }</style>
+</head>
+<body>
+  <h1>Promocao Especial</h1>
+
+
+
+
+  <p>50% off em <a href="https://promo.example.com">tudo na nossa loja</a>!</p>
+
+
+
+  <p>Use o cupom <strong>SAVE50</strong> ate sexta.</p>
+
+  <script>analytics.track('email_open');</script>
+  <img src="https://track.example.com/pixel.gif" width="1" height="1" alt="">
+  <noscript>Habilite JavaScript</noscript>
+</body>
+</html>
+
+--boundary-html-heavy--

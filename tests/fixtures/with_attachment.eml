@@ -1,0 +1,30 @@
+From: relatorios@empresa.example.com
+To: me@example.com
+Subject: Relatorio Q1 2026 em anexo
+Date: Wed, 16 Apr 2026 07:00:00 -0300
+Message-ID: <relatorio-789@empresa.example.com>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="boundary-attachment"
+
+--boundary-attachment
+Content-Type: text/plain; charset=utf-8
+
+Ola,
+
+Segue em anexo o relatorio consolidado do Q1 2026.
+Destaques na pagina 2.
+
+Atenciosamente,
+Equipe de Relatorios
+
+--boundary-attachment
+Content-Type: application/pdf; name="relatorio_q1_2026.pdf"
+Content-Disposition: attachment; filename="relatorio_q1_2026.pdf"
+Content-Transfer-Encoding: base64
+
+JVBERi0xLjQKJfake-cGRmLWNvbnRlbnQtZm9yLXRlc3RpbmctcHVycG9zZXMtb25seQpUaGlzI
+GlzIG5vdCBhIHJlYWwgUERGIGZpbGUsIGJ1dCBpdCBoYXMgZW5vdWdoIGJ5dGVzIHRvIHRlc3Qg
+b3VyIGF0dGFjaG1lbnQgaGFuZGxpbmcuClN0YXJ0IGFuZCBlbmQgbWFya2VycyBpbmNsdWRlZC4
+KJSVFT0YK
+
+--boundary-attachment--
